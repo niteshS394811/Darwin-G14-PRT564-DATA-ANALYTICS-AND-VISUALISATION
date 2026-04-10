@@ -24,3 +24,4 @@ print(df.describe())
 sns.histplot(df['Age'], kde=True)
 plt.title('Distribution of Age (Target Variable)')
 plt.show()
+
