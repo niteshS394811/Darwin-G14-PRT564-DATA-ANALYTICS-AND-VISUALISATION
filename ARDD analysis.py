@@ -296,3 +296,64 @@ pred = model.predict(X_test)
 print("Accuracy :", accuracy_score(y_test, pred))
 print("AUC :", roc_auc_score(y_test, model.predict_proba(X_test)[:, 1]))
 print(classification_report(y_test, pred))
+
+
+#########Nitesh #########
+# ── RQ4 – TEMPORAL PATTERNS ─────────────────────────────────────────────────
+hr("RQ4 – Temporal patterns")
+
+if "Time" in fat.columns:
+    fat_t = fat.copy()
+    fat_t["Hour"] = pd.to_datetime(fat_t["Time"], errors="coerce").dt.hour
+
+    if "Dayweek" in fat_t.columns:
+        day_ord = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
+        hd = (fat_t.groupby(["Dayweek", "Hour"]).size()
+              .unstack(fill_value=0)
+              .reindex(day_ord)
+              .reindex(columns=range(24), fill_value=0))
+
+        fig, ax = plt.subplots(figsize=(16, 5))
+        sns.heatmap(hd, cmap="YlOrRd", ax=ax, linewidths=0.15, cbar_kws={"label": "Fatalities"})
+        ax.set_xlabel("Hour (0–23)")
+        ax.set_title("RQ4a – Day × Hour Fatality Heatmap", fontweight="bold")
+        sav("12_RQ4a_heatmap.png")
+
+# Holiday & Night patterns
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+hg = df.groupby("Is_Holiday")["Number Fatalities"].mean()
+hg.index = ["Non-Holiday", "Holiday"]
+hg.plot(kind="bar", ax=axes[0], color=[C["te"], C["co"]], edgecolor="white", rot=0)
+axes[0].set_title("RQ4c – Avg Fatalities: Holiday vs Non-Holiday")
+
+ng = df.groupby("Is_Night")["Number Fatalities"].mean()
+ng.index = ["Day", "Night"]
+ng.plot(kind="bar", ax=axes[1], color=[C["am"], C["pu"]], edgecolor="white", rot=0)
+axes[1].set_title("RQ4d – Avg Fatalities: Day vs Night")
+
+plt.suptitle("RQ4 – Temporal patterns", fontsize=12, fontweight="bold")
+sav("14_RQ4cd_patterns.png")
+
+# ── RQ5 – SINGLE CRASH CLASSIFICATION ───────────────────────────────────────
+print("\n=== RQ5: Single Crash Classification ===")
+
+y5 = dataset["Is_Single_Crash"]
+X_train5, X_test5, y_train5, y_test5 = train_test_split(
+    X_pca, y5, test_size=0.2, random_state=42, stratify=y5
+)
+
+model5 = RandomForestClassifier(n_estimators=300, max_depth=12, random_state=42, n_jobs=-1)
+model5.fit(X_train5, y_train5)
+pred5 = model5.predict(X_test5)
+
+print("Accuracy :", accuracy_score(y_test5, pred5))
+print("AUC      :", roc_auc_score(y_test5, model5.predict_proba(X_test5)[:, 1]))
+print(classification_report(y_test5, pred5))
+
+# ── CROSS VALIDATION ────────────────────────────────────────────────────────
+print("\n=== Cross Validation (VRU Model) ===")
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+scores = cross_val_score(model, X_pca, dataset["Is_VRU"], cv=cv, scoring="accuracy")
+print(f"CV Accuracy: {scores.mean():.4f} ± {scores.std():.4f}")
+
