@@ -55,35 +55,7 @@ df = crashes.merge(fat[["Crash ID", "Road User", "Gender", "Age", "Age Group"]],
                    on="Crash ID", how="left")
 print(f"crashes: {crashes.shape} | fatalities: {fat.shape} | merged: {df.shape}")
 
-# ── 2. SKEWNESS & CENTRAL TENDENCY ───────────────────────────────────────────
-hr("STEP 2 – SKEWNESS & CENTRAL TENDENCY")
-print(f" {'Column':<23} {'Skew':>8} {'Mean':>8} {'Median':>8} {'Mode':>8} Recommendation")
-print("-" * 85)
-skew_info = {}
-for col in ["Number Fatalities", "Speed Limit", "Age"]:
-    if col not in df.columns: continue
-    s = df[col].dropna()
-    if len(s) == 0: continue
-    sk = float(skew(s))
-    rec = "USE MEAN" if abs(sk) < 0.5 else ("USE MEDIAN (right-skewed)" if sk > 0 else "USE MEDIAN (left-skewed)")
-    mode_val = float(s.mode().iloc[0]) if not s.mode().empty else np.nan
-    print(f" {col:<23} {sk:>8.3f} {s.mean():>8.2f} {s.median():>8.2f} {mode_val:>8.2f} {rec}")
 
-fig, axes = plt.subplots(1, 3, figsize=(14, 4))
-cols_to_plot = ["Number Fatalities", "Speed Limit", "Age"]
-colors = [C["bl"], C["te"], C["co"]]
-for ax, col, col_c in zip(axes, cols_to_plot, colors):
-    if col not in df.columns:
-        ax.set_visible(False)
-        continue
-    d = df[col].dropna()
-    ax.hist(d, bins=35, color=col_c, edgecolor="white", alpha=0.85)
-    ax.axvline(d.mean(), color="red", ls="--", lw=1.8, label=f"Mean {d.mean():.1f}")
-    ax.axvline(d.median(), color="green", ls="--", lw=1.8, label=f"Median {d.median():.1f}")
-    ax.set_title(f"{col}\nskew={skew(d):+.2f}", fontsize=9)
-    ax.legend(fontsize=7)
-plt.suptitle("Step 2 – Skewness & Central Tendency", fontsize=11, fontweight="bold")
-sav("01_skewness.png")
 
 # ── 3. DATA CLEANING ─────────────────────────────────────────────────────────
 hr("STEP 3 – DATA CLEANING")
@@ -119,7 +91,35 @@ pre = len(df)
 df = df.drop_duplicates().reset_index(drop=True)
 print(f"Duplicates removed: {pre - len(df)} | Final shape: {df.shape}")
 
+# ── 2. SKEWNESS & CENTRAL TENDENCY ───────────────────────────────────────────
+hr("STEP 2 – SKEWNESS & CENTRAL TENDENCY")
+print(f" {'Column':<23} {'Skew':>8} {'Mean':>8} {'Median':>8} {'Mode':>8} Recommendation")
+print("-" * 85)
+skew_info = {}
+for col in ["Number Fatalities", "Speed Limit", "Age"]:
+    if col not in df.columns: continue
+    s = df[col].dropna()
+    if len(s) == 0: continue
+    sk = float(skew(s))
+    rec = "USE MEAN" if abs(sk) < 0.5 else ("USE MEDIAN (right-skewed)" if sk > 0 else "USE MEDIAN (left-skewed)")
+    mode_val = float(s.mode().iloc[0]) if not s.mode().empty else np.nan
+    print(f" {col:<23} {sk:>8.3f} {s.mean():>8.2f} {s.median():>8.2f} {mode_val:>8.2f} {rec}")
 
+fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+cols_to_plot = ["Number Fatalities", "Speed Limit", "Age"]
+colors = [C["bl"], C["te"], C["co"]]
+for ax, col, col_c in zip(axes, cols_to_plot, colors):
+    if col not in df.columns:
+        ax.set_visible(False)
+        continue
+    d = df[col].dropna()
+    ax.hist(d, bins=35, color=col_c, edgecolor="white", alpha=0.85)
+    ax.axvline(d.mean(), color="red", ls="--", lw=1.8, label=f"Mean {d.mean():.1f}")
+    ax.axvline(d.median(), color="green", ls="--", lw=1.8, label=f"Median {d.median():.1f}")
+    ax.set_title(f"{col}\nskew={skew(d):+.2f}", fontsize=9)
+    ax.legend(fontsize=7)
+plt.suptitle("Step 2 – Skewness & Central Tendency", fontsize=11, fontweight="bold")
+sav("01_skewness.png")
 
 # ── 4. FEATURE ENGINEERING ───────────────────────────────────────────────────
 hr("STEP 4 – FEATURE ENGINEERING")
